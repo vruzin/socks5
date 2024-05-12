@@ -1,7 +1,7 @@
 #!/bin/bash
 # Homepage: selivan.github.io/socks
 # Author: Pavel Selivanov
-# Contributors: Vlad Safronov (Oracle Linux 7.5, Centos 7)
+# Contributors: Vlad Safronov (Oracle Linux 7.5, Centos 7), thehackcave for Debian 12, Ubuntu 22.04, 24.04
 
 function get_external_address() {
 	local addr=$( timeout 3 dig +short myip.opendns.com @resolver1.opendns.com || \
@@ -228,6 +228,28 @@ elif [ "$ID $VERSION_CODENAME" = "ubuntu focal" ]; then
 
  # Ubuntu 22.04 Jammy Jellyfish
 elif [ "$ID $VERSION_CODENAME" = "ubuntu jammy" ]; then
+
+	apt update
+	apt install -y dante-server libpam-pwdfile openssl
+
+	generate_password_file /etc/danted.passwd "$USER" "$PASSWORD"
+
+	generate_pam /etc/pam.d/sockd /etc/danted.passwd
+
+	generate_config_v14 /etc/danted.conf "$IFACE" "$PORT"
+
+	open_ufw_port "$PORT"
+
+	systemctl restart danted.service
+
+	echo "Your socks proxy configuration:"
+	echo "Address: $( get_external_address )"
+	echo "Port: $PORT"
+	echo "User: $USER"
+	echo "Password: $PASSWORD"
+
+ # Ubuntu 24.04 Noble Numbat
+elif [ "$ID $VERSION_CODENAME" = "ubuntu noble" ]; then
 
 	apt update
 	apt install -y dante-server libpam-pwdfile openssl
